@@ -2,102 +2,62 @@
 
 ## Overview
 
-Customer churn is one of the biggest challenges for subscription-based businesses. Instead of relying only on visualizations or correlations, this project combines statistical hypothesis testing with business intelligence to identify which customer attributes are genuinely associated with churn and which factors are important enough to prioritize.
+Losing a customer costs a lot more than most businesses like to admit — acquiring a new one almost always costs more than keeping an existing one happy. Yet a lot of churn analysis stops at "these variables correlate with churn" without asking the harder question: *which of these actually matter enough to act on?*
 
-The project analyzes **7,043 telecom customers** using Python for statistical analysis and Power BI for interactive visualization, demonstrating an end-to-end analytics workflow from data cleaning to business recommendations.
+That's the gap this project tries to close. Using a telecom operator's customer base of 7,043 subscribers, I combined statistical hypothesis testing with a Power BI dashboard to separate genuine churn drivers from statistical noise, then turned that into a set of concrete, defensible business recommendations — not just a list of "significant" p-values.
 
----
+## The Problem
 
-## Business Objective
+Telecom is a brutal industry for retention — customers can switch providers with a phone call, and once they're gone, the acquisition cost to replace them is steep. This operator has a 26.5% churn rate, and I was asked, in effect, the question every retention team eventually gets asked: *"where should we actually focus, and why?"*
 
-This analysis aims to answer three key questions:
+That question breaks down into three parts:
 
-- Which customer and account characteristics are statistically associated with churn?
-- Which of these factors have meaningful business impact rather than simply being statistically significant?
-- What actions can the business take to reduce customer churn?
+1. Which customer and account characteristics are statistically associated with churn?
+2. Of those, which ones matter enough in practice to justify spending a retention budget on — versus which are technically "significant" but barely move the needle?
+3. Given the answer, what should the business actually do?
 
----
+That third question is the one a lot of churn projects skip, and it's the one I cared about most here — a chart showing "fiber optic customers churn more" isn't useful on its own; a recommendation is.
 
 ## Dataset
 
-**Source:** https://www.kaggle.com/datasets/blastchar/telco-customer-churn
+**Source:** [IBM Telco Customer Churn dataset (Kaggle)](https://www.kaggle.com/datasets/blastchar/telco-customer-churn)
 
-The dataset contains:
+- 7,043 customer records, 21 attributes spanning demographics, subscribed services, contract terms, and billing
+- Overall churn rate: 26.5%
 
-- 7,043 customer records
-- 21 customer and account attributes
-- Demographic information
-- Services subscribed
-- Billing and contract information
-- Overall churn rate: **26.5%**
+## How I Approached It
 
----
+**1. Data cleaning.** The `TotalCharges` column looked numeric but was stored as text, and 11 rows were just blank. Rather than dropping them, I checked *why* — every single one belonged to a brand-new customer with `tenure = 0` who simply hadn't been billed yet. That's a real-world data quality pattern, not random noise, so I filled those with 0 instead of discarding data.
 
-## Project Workflow
+I also collapsed categories like `"No internet service"` down to `"No"` across six columns. Small thing, but it matters — leaving it as a separate category would have quietly distorted the chi-square tests later.
 
-### 1. Data Cleaning
+**2. Hypothesis testing.** For categorical variables (contract type, payment method, etc.) I used chi-square tests of independence against churn. For numeric variables (tenure, monthly charges) I used Welch's t-test, which doesn't assume equal variance between the churned and retained groups — a safer default than a standard t-test when you haven't verified that assumption.
 
-- Fixed missing values in `TotalCharges` by identifying that they belonged to newly joined customers (`tenure = 0`) rather than removing records.
-- Standardized service categories by replacing `"No internet service"` with `"No"` to avoid redundant categories during statistical testing.
+**3. Effect size — the part that actually matters.** Here's the catch with a dataset this size: with over 7,000 rows, almost *any* variable comes back "statistically significant" at p < 0.05, even ones with a trivial real-world effect. So statistical significance alone isn't a good filter for where to focus. I calculated Cramer's V for every categorical variable to measure the actual *strength* of association, not just whether one exists. This is what let me separate the handful of drivers worth acting on from the long list of technically-significant-but-practically-irrelevant ones.
 
----
+**4. Visualization.** Static charts in Matplotlib for the analysis itself, plus a Power BI dashboard so the findings are explorable by someone who isn't going to read a Jupyter notebook.
 
-### 2. Statistical Analysis
+## Key Findings
 
-Performed hypothesis testing to determine whether customer attributes were significantly associated with churn.
+**Contract type is, by a wide margin, the strongest driver of churn** (Cramer's V = 0.41 — moderate-to-strong, and the highest of any variable tested). The pattern is stark once you lay it out:
 
-**Categorical variables**
-- Chi-Square Test of Independence
+- Month-to-month contracts: **42.7% churn**
+- One-year contracts: **11.3% churn**
+- Two-year contracts: **2.8% churn**
 
-**Numerical variables**
-- Welch's Independent Samples t-test
+That's not a subtle difference — a month-to-month customer is roughly 15x more likely to churn than a two-year customer. If I had to point to one lever for this business to pull first, it's this one.
 
----
+**Internet service type and payment method are the next-strongest signals** (Cramer's V = 0.32 and 0.30). Specifically, customers on fiber optic internet who pay via electronic check churn noticeably more than other combinations. That's an interesting one because it's not immediately obvious *why* — it could be pricing, service quality, or friction in the electronic check billing experience — and it's the kind of finding that warrants a follow-up conversation with the business rather than a definitive answer from the data alone.
 
-### 3. Effect Size Analysis
+**Tenure and spend tell a consistent story.** Customers who churned had been with the company for an average of 18 months and paid $74.44/month, compared to 37.6 months and $61.27/month for customers who stayed. Put simply: the customers walking away tend to be newer and paying more — which, combined with the contract finding, points toward weak early-lifecycle retention rather than long-term customers suddenly deciding to leave.
 
-With more than 7,000 observations, many variables become statistically significant simply because of the large sample size.
+**Just as important — what turned out *not* to matter.** Gender, phone service, streaming TV, streaming movies, and multiple lines were either not statistically significant or had negligible effect sizes despite sometimes "looking" different in a raw crosstab. If this were a real retention budget, I'd actively recommend *not* spending it chasing these — a genuinely useful finding, even though it's a negative one.
 
-To distinguish meaningful business drivers from statistical noise, **Cramer's V** was calculated for every categorical feature.
+## Business Recommendations
 
----
-
-### 4. Data Visualization
-
-Created visualizations in both **Python (Matplotlib)** and **Power BI** to communicate insights through an interactive dashboard.
-
----
-
-# Key Findings
-
-- **Contract type** was the strongest predictor of churn (Cramer's V = **0.41**).
-  - Month-to-month: **42.7% churn**
-  - One-year: **11.3% churn**
-  - Two-year: **2.8% churn**
-
-- Customers using **Fiber Optic Internet** and **Electronic Check** payment methods showed substantially higher churn rates.
-
-- Customers who churned had:
-  - Average tenure of **18 months**
-  - Average monthly charges of **$74.44**
-
-- Customers who stayed had:
-  - Average tenure of **37.6 months**
-  - Average monthly charges of **$61.27**
-
-- Features such as **Gender**, **Phone Service**, **Streaming TV**, and **Multiple Lines** had either negligible or very weak practical impact despite some being statistically significant.
-
----
-
-# Business Recommendations
-
-Based on the statistical findings:
-
-- Encourage month-to-month customers to move to longer-term contracts through targeted promotions.
-- Investigate the high churn observed among Fiber Optic customers paying via Electronic Check to identify possible service or billing issues.
-- Focus customer engagement during the first year, where churn risk is highest.
-
----
+1. **Make it easier and more attractive to move off month-to-month contracts.** This is the single highest-leverage lever in the data — targeted discounts or perks for upgrading to a one- or two-year term directly address the strongest churn driver found.
+2. **Dig into the fiber optic + electronic check segment specifically.** The data flags this combination as a risk pocket, but the *why* needs a human follow-up — a service quality audit or a look at billing friction in that payment flow.
+3. **Shift retention effort earlier in the customer lifecycle.** Since churned customers skew toward the first ~18 months, onboarding and early check-ins likely offer more ROI than long-tenure loyalty perks.
 
 # Power BI Dashboard
 
