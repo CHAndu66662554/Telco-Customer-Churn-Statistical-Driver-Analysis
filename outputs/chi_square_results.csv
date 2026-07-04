@@ -1,0 +1,17 @@
+feature,chi2_stat,p_value,significant
+SeniorCitizen,159.43,0.0,YES
+Partner,158.73,0.0,YES
+Dependents,189.13,0.0,YES
+OnlineSecurity,205.63,0.0,YES
+InternetService,732.31,0.0,YES
+TechSupport,190.17,0.0,YES
+DeviceProtection,30.51,0.0,YES
+OnlineBackup,47.26,0.0,YES
+StreamingMovies,26.25,0.0,YES
+Contract,1184.6,0.0,YES
+PaperlessBilling,258.28,0.0,YES
+StreamingTV,27.86,0.0,YES
+PaymentMethod,648.14,0.0,YES
+MultipleLines,11.14,0.00084,YES
+PhoneService,0.92,0.33878,no
+gender,0.48,0.48658,no

@@ -1,0 +1,4 @@
+feature,mean_churned,mean_retained,t_stat,p_value,significant
+tenure,17.98,37.57,-34.82,0.0,YES
+MonthlyCharges,74.44,61.27,18.41,0.0,YES
+TotalCharges,1531.8,2549.91,-18.71,0.0,YES
