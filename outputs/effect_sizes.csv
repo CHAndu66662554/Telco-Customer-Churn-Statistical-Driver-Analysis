@@ -1,0 +1,17 @@
+feature,cramers_v,strength
+Contract,0.41,moderate
+InternetService,0.322,moderate
+PaymentMethod,0.303,moderate
+PaperlessBilling,0.191,weak
+OnlineSecurity,0.171,weak
+TechSupport,0.164,weak
+Dependents,0.164,weak
+SeniorCitizen,0.15,weak
+Partner,0.15,weak
+OnlineBackup,0.082,negligible
+DeviceProtection,0.066,negligible
+StreamingTV,0.063,negligible
+StreamingMovies,0.061,negligible
+MultipleLines,0.04,negligible
+PhoneService,0.011,negligible
+gender,0.008,negligible
